@@ -1206,18 +1206,22 @@ function logout(){
 // ══════════════════════════════
 function sv(n){
   if(n==='assessment'){
-    // Assessment is embedded — update player display
     const pnd = document.getElementById('player-name-display');
     if(pnd && CU) pnd.textContent = '👤 ' + CU;
-    // Reset assessment if already completed (allow redo)
-    // but keep state if mid-quiz
+    // Ensure intro screen is visible (first time or after reset)
+    const activeScreen = document.querySelector('#view-assessment .as-screen.active');
+    if(!activeScreen){
+      document.querySelectorAll('.as-screen').forEach(s=>s.classList.remove('active'));
+      const intro = document.getElementById('s-intro');
+      if(intro) intro.classList.add('active');
+    }
   }
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
   document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('on'));
   document.getElementById('view-'+n).classList.add('on');
   document.getElementById('tab-'+n).classList.add('on');
   if(n==='home')   renderHome();
-  if(n==='submit') renderForm();
+  if(n==='submit'&&!EID) renderForm();
   if(n==='mine')   renderMine();
   if(n==='rules')  renderRules();
   if(n==='admin')  {renderAdmin();renderAssessmentGrids();}
@@ -1371,7 +1375,9 @@ async function finalSubmit(id){
 function editInno(id){
   const inv=S.innovations.find(i=>i.id===id);if(!inv)return;
   if(!canEdit(inv))return toast('Já aprovada, não pode editar.','err');
-  renderForm(inv);sv('submit');
+  EID=inv._docId||inv.id;   // set BEFORE sv() so renderForm() guard fires
+  renderForm(inv);
+  sv('submit');
 }
 
 // ══════════════════════════════
