@@ -641,14 +641,7 @@ function startFirestoreListener(){
             }catch(e){}
           }
         }
-        // Reset all non-approved innovations back to pending
-        for(const inv of S.innovations){
-          if(!inv.prems||!inv.prems.includes('approved')){
-            if(inv.status&&inv.status!=='pending'){
-              try{ await db.collection('innovations').doc(inv._docId).update({status:'pending',tecNote:''}); }catch(e){}
-            }
-          }
-        }
+
       }, 2000);
     }
     // re-render current view
