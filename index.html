@@ -776,7 +776,8 @@ main{max-width:1240px;margin:0 auto;padding:28px 22px;position:relative;z-index:
         <div class="ptsprev"><span class="ptslbl">Pontos desta submissão</span><span class="ptsnum" id="ptspv">0 pts</span></div>
       </div>
       <div style="margin-top:20px;display:flex;gap:9px;flex-wrap:wrap">
-        <button class="btn bp" id="btn-sub" onclick="submitInno()">⚽ ENVIAR PARA A TÉCNICA</button>
+        <button class="btn bp" id="btn-sub" onclick="submitInno(false)">💾 SALVAR EDIÇÃO</button>
+        <button class="btn bgg" id="btn-send-tec" onclick="submitInno(true)" style="display:none">⚽ ENVIAR PARA A TÉCNICA</button>
         <button class="btn bs" onclick="cancelEdit()">CANCELAR</button>
       </div>
     </div>
@@ -1274,6 +1275,11 @@ function renderForm(inv){
   document.getElementById('ssub-submit').textContent=ed?'Editando — salve para atualizar.':'Preencha o case completo.';
   document.getElementById('enotice').style.display=ed?'flex':'none';
   document.getElementById('btn-sub').textContent=ed?'💾 SALVAR EDIÇÃO':'⚽ ENVIAR PARA A TÉCNICA';
+  document.getElementById('btn-sub').style.display=ed?'inline-flex':'none';
+  const btnSend=document.getElementById('btn-send-tec');
+  if(btnSend) btnSend.style.display=ed?'inline-flex':'none';
+  // For new submission, reuse btn-sub as the send button
+  if(!ed){ document.getElementById('btn-sub').style.display='inline-flex'; document.getElementById('btn-sub').textContent='⚽ ENVIAR PARA A TÉCNICA'; if(btnSend) btnSend.style.display='none'; }
   document.getElementById('feid').value=ed?inv.id:'';
   if(ed){
     document.getElementById('ftit').value=inv.title;
@@ -1325,7 +1331,7 @@ function updPts(){
   document.getElementById('ptspv').textContent=p+' pts';
 }
 document.addEventListener('input',e=>{if(['ftit','fdesc','fmet','fdl'].includes(e.target?.id))updPts();});
-async function submitInno(){
+async function submitInno(sendToTec=false){
   const title=document.getElementById('ftit').value.trim(),desc=document.getElementById('fdesc').value.trim(),metric=document.getElementById('fmet').value.trim(),deadline=document.getElementById('fdl').value,category=document.getElementById('fcat').value,impact=document.getElementById('fimp').value.trim();
   if(!title)return toast('Preencha o título.','err');
   if(!desc)return toast('Preencha a descrição.','err');
@@ -1349,10 +1355,14 @@ async function submitInno(){
     const inv=S.innovations.find(i=>i._docId===EID||i.id===EID);if(!inv)return toast('Erro.','err');
     const adm=inv.prems.filter(id=>PREMS.find(p=>p.id===id)?.g!=='u');
     inv.bizJustifications=bizJusts;inv.prems=[...adm,...up];inv.title=title;inv.desc=desc;inv.metric=metric;inv.deadline=deadline;inv.category=category;inv.impact=impact;inv.editedAt=new Date().toLocaleDateString('pt-BR');
-    // If returning from tec_rejected, reset to pending so técnica sees it again
-    if(inv.status==='tec_rejected'){inv.status='pending';inv.tecNote='Jogador ajustou e reenviou para avaliação.';}
+    if(sendToTec){
+      // Send to tecnica: reset status so she sees it
+      inv.status='pending';
+      inv.tecNote= inv.status==='tec_rejected' ? 'Jogador ajustou e reenviou para avaliação.' : inv.tecNote;
+    }
     await saveInnovation(inv);
-    toast(`✅ "${title}" atualizada e reenviada para a Técnica!`);EID=null;
+    toast(sendToTec ? `⚽ "${title}" enviada para a Técnica!` : `💾 "${title}" salva com sucesso!`);
+    EID=null;
   }else{
       const inv={id:S.nextId++,player:CU,title,desc,metric,deadline,category,impact,prems:up,...bizJusts,status:'pending',submittedAt:new Date().toLocaleDateString('pt-BR'),editedAt:null,adminNote:'',tecNote:'',hours_before:null,hours_after:null};
     S.innovations.push(inv);
