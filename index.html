@@ -1302,7 +1302,7 @@ async function tecToggle(id, premId, el){
   await saveInnovation(inv);
   renderTecnica();
 }
-async async function tecApprove(id){
+async function tecApprove(id){
   const inv=S.innovations.find(i=>i.id===id);if(!inv)return;
   inv.status='tec_approved_player';
   inv.tecNote='Pausa técnica aprovada! Faça seus check-ins e clique em SUBMISSÃO FINAL — CHUTE para enviar ao árbitro.';
